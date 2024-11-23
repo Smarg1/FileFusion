@@ -1,64 +1,30 @@
-"""
-Copyright 2024 Smarg1
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
-
 from tkinter import *
 from tkinter import ttk
-from customtkinter import CTk, set_appearance_mode, CTkScrollableFrame
+from customtkinter import CTk, set_appearance_mode, CTkScrollableFrame, CTkLabel
 from logger import Logger 
 from organizer.enums import Settings
 from PIL import Image, ImageTk
 import time
 
 class GuiHandler(CTk):
-
-    VERSION = "1.0.0"
-    NAME = "FileFusion"
-
-    __doc__ = fr"""
-    ______ _ _      ________        _             
-    |  ____(_) |    |  ____|       (_)            
-    | |__   _| | ___| |__ _   _ ___ _  ___  _ __  
-    |  __| | | |/ _ \  __| | | / __| |/ _ \| '_ \ 
-    | |    | | |  __/ |  | |_| \__ \ | (_) | | | |
-    |_|    |_|_|\___|_|   \__,_|___/_|\___/|_| |_|
-                            Version {VERSION} by Smarg1                                                                                                          
-    """
-
     def __init__(self): 
-        # Setup
         super().__init__()
-        self.logger = Logger(False)
-        self.enum = Settings()
-        self.geometry("800x500+60+60")
-        self.minsize(800, 500)
-        self.title("FileFusion")
-
-        self.logger.info(f"Starting {self.NAME}...")
-        self.logger.info(self.__doc__)
-
         try:
+            # Setup
+            self.logger = Logger(False)
+            self.enum = Settings()
+            self.geometry("800x500+60+60")
+            self.minsize(800, 500)
+            self.title("FileFusion")
+
             # Theme
             self.theme = Settings().get_theme()
             set_appearance_mode(self.theme["theme"])
             self.load_images()
-            ttk.Style(self).configure(".", background=self.theme["bg"], font=("Helvetica", 18), foreground=self.theme["fg"], relief="flat")
 
             # Sidebar Frame
             self.sidebar = Frame(self, width=50, bg=self.theme["sidebar"], bd=0, relief="flat")
-            self.sidebar.pack(side="left",fill="y")
+            self.sidebar.pack(side="left", fill="y")
             self.sidebar.propagate(False)
             self.sidebar.bind('<Enter>', lambda e: self._animate_sidebar(50, 185, 15, "expand"))
             self.sidebar.bind('<Leave>', lambda e: self._animate_sidebar(185, 50, 15, "collapse"))
@@ -110,23 +76,26 @@ class GuiHandler(CTk):
             print(e)
     
     def load_images(self):
-            self.icons = []
-            path = [(r"asset\icon.png", 32, 28),
+        self.icons = []
+        path = [(r"asset\icon.png", 32, 28),
                 (r"asset\button\home.png", 50, 50),
                 (r"asset\button\bolt.png", 50, 50),
                 (r"asset\button\store.png", 50, 50),
                 (r"asset\button\reload.png", 50, 50),
                 (r"asset\button\cog.png", 50, 50),
             ]
-            for i in range(len(path)):
-                tmp = Image.open(path[i][0])
-                tmp = tmp.resize((path[i][1], path[i][2]), resample=Image.Resampling.LANCZOS)
-                tmp = ImageTk.PhotoImage(tmp)
-                self.icons.append(tmp)
+        for i in range(len(path)):
+            tmp = Image.open(path[i][0])
+            tmp = tmp.resize((path[i][1], path[i][2]), resample=Image.Resampling.LANCZOS)
+            tmp = ImageTk.PhotoImage(tmp)
+            self.icons.append(tmp)
         
+
     def redraw(self):
         for w in self.canvas.winfo_children():
             w.destroy()
+            self.update()
+            self.update_idletasks()
 
     def Home(self):
         self.redraw()
@@ -143,21 +112,27 @@ class GuiHandler(CTk):
     def settings(self):
         self.redraw()
 
-        ttk.Label(self.canvas, text="Settings", font=("Helvetica", 72)).pack(side="top", anchor="nw", padx=10, pady=10)
+        ttk.Label(self.canvas, text="Settings", background=self.theme["bg"], foreground=self.theme["fg"], font=("Helvetica", 72)).pack(side="top", anchor="nw", padx=10, pady=10)
 
         canvas = CTkScrollableFrame(self.canvas, bg_color=self.theme["bg"], fg_color=self.theme["bg"], corner_radius=0)
         canvas.pack(side="top", expand=True, fill="both")
 
-        ttk.Label(canvas, text="Theme: ", font=("Helvetica", 24)).pack(side="top", anchor="nw", padx=10, pady=10)
+        CTkLabel(canvas, corner_radius=0, fg_color=self.theme["fg"])
+        #ttk.Label(canvas, text="Theme: ", font=("Helvetica", 24)).pack(side="top", anchor="nw", padx=10, pady=10)
         value = {"Dark" : "dark", "Light": "light"}
         self.selected_theme = StringVar(self, name="theme")
         self.selected_theme.set(self.theme["theme"])
         for text, value in value.items(): 
-            ttk.Radiobutton(canvas, 
+            Radiobutton(canvas, 
                         value=value,
                         text=text,
                         command=self.__set_theme,
-                        variable=self.selected_theme).pack(side="left")
+                        variable=self.selected_theme,
+                        bg=self.theme["bg"],
+                        font=("helvetica", 22),
+                        fg=self.theme["fg"],
+                        activebackground=self.theme["bg"],
+                        activeforeground=self.theme["fg"]).pack(side="left")
 
     def store(self):
         self.redraw()
@@ -176,14 +151,17 @@ class GuiHandler(CTk):
             elif direction == "collapse":
                 for i in range(len(self.button)):
                     self.button[i].config(text="", compound="left")
+    
     def __set_theme(self):
         theme = self.selected_theme.get()
         Settings().set_theme(theme)
         self.theme = Settings().get_theme()
         set_appearance_mode(theme)
-        self.sidebar.update()
-        self.update()
-        self.canvas.update()
+        for i in range(len(self.button)):
+            self.button[i].config(bg=self.theme["sidebar"], fg="White")
+        self.canvas.config(bg=self.theme["bg"])
+        self.redraw()
+        self.settings()
 
 if __name__ == "__main__":
     gui = GuiHandler()

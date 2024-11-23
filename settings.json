@@ -1,0 +1,82 @@
+{
+    "types": {
+        "photos": [
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".gif",
+            ".bmp",
+            ".tiff",
+            ".tif",
+            ".svg",
+            ".webp",
+            ".heif",
+            ".heic",
+            ".ico",
+            ".raw",
+            ".cr2",
+            ".nef",
+            ".orf",
+            ".sr2",
+            ".arw",
+            ".dng"
+        ],
+        "videos": [
+            ".mp4",
+            ".mov",
+            ".wmv",
+            ".avi",
+            ".mkv",
+            ".flv",
+            ".webm",
+            ".mpeg",
+            ".mpg",
+            ".m4v",
+            ".3gp",
+            ".3g2",
+            ".mts",
+            ".m2ts",
+            ".vob",
+            ".rm",
+            ".rmvb",
+            ".asf",
+            ".f4v"
+        ],
+        "documents": [
+            ".pdf"
+        ],
+        "test": [
+            ".a",
+            ".b"
+        ]
+    },
+    "_presets": {
+        "Media": [
+            "photos",
+            "videos"
+        ],
+        "all": [
+            "test",
+            "documents",
+            "photos",
+            "video"
+        ]
+    },
+    "_settings": {
+        "_gui": {
+            "cur": "light",
+            "dark": {
+                "sidebar": "#2a2a2a",
+                "bg": "#333333",
+                "theme": "dark",
+                "fg": "#FFFFFF"
+            },
+            "light": {
+                "sidebar": "#4e9cff",
+                "bg": "#abe6eb",
+                "theme": "light",
+                "fg": "#212121"
+            }
+        }
+    }
+}
