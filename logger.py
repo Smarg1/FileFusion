@@ -19,11 +19,11 @@ import os
 from datetime import datetime
 
 class Logger:
-    def __init__(self, output=False):
-
-        os.makedirs("logs", exist_ok=True)
+    def __init__(self):
         format = "[%(asctime)s] [%(name)s/%(levelname)s]: %(message)s"
-        log_file = os.path.join("logs", f"log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log")
+        logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+        os.makedirs(logs_dir, exist_ok=True)
+        log_file = os.path.join(logs_dir, f"log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log")
 
         self.logger = logging.getLogger(__class__.__name__)
         self.logger.setLevel(logging.DEBUG)
@@ -35,14 +35,13 @@ class Logger:
         file_handler.setFormatter(file_formatter)
         self.logger.addHandler(file_handler)
 
-        if output:
-            console_handler = logging.StreamHandler()
-            console_handler.setLevel(logging.DEBUG)
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.DEBUG)
 
-            console_formatter = logging.Formatter(format, datefmt="%H:%M:%S")
-            console_handler.setFormatter(console_formatter)
+        console_formatter = logging.Formatter(format, datefmt="%H:%M:%S")
+        console_handler.setFormatter(console_formatter)
 
-            self.logger.addHandler(console_handler)
+        self.logger.addHandler(console_handler)
 
     def debug(self, message):
         self.logger.debug(message)
@@ -61,7 +60,7 @@ class Logger:
         self.logger.critical(message)
 
 if '__main__' == __name__:
-    log = Logger(True)
+    log = Logger()
     log.debug("Debug")
     log.warning("Warning")
     log.info("Information")

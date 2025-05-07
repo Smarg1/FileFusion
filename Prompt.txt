@@ -1,0 +1,106 @@
+can u make a language parser. for a language that is derived from json
+
+# is comment
+
+1. this language is going to be used to specify file organisation method.
+
+2. the program will loop through each file in the all the source and first it will check for any duplicate of it in the source folder and then it will classify(using the variables and comparing them to get the result of the string specified using eval() and functions in the class to check. it should only be able to execute functions without a _ behind) then check which file type to convert to(refer to 5). then it will be shifted to that folder. according to how the json was structured.
+
+3."_duplicate_check" tags decides whether to check for duplicates
+
+4.Variables to be parsed:
+$date - date of modification
+$size - size of file in mb
+$app - app used to open it
+$type - file extension
+btw name of folder which is key name should also be able to use these variables
+
+5.[".mp4->.mp3"," .mp3->.png"] conversions should be specifiable like that. and when parsing it should check for all conversions and also all condition. only then all conditions meet will the file be eligible for that folder.
+
+file parser should go through all keys. which ever has to most match. it will go to that. so this loop continues until the file reaches one end of the subfolder levels. but if in a level none matches then the file should be just place there and left. so language parser should just create the directory string  move operation is supposed to be done at last when the directory string has been formed
+
+here is the code to edit. start editing mainly from line 42 till class end
+
+import os
+import shutil
+import time
+import argparse
+from datetime import datetime
+import json
+
+class FileOrganizer:
+    def __init__(self, source, dest, ext=None):
+        self.source = source
+        self.dest = dest
+        jsonext = {}
+        for v in ext:
+            try:
+                with open(f"{v}.json", 'r') as file:
+                    tmp = json.load(file)
+                    jsonext = {**jsonext, **tmp}
+            except FileNotFoundError:
+                print(f"File not found: {v}")
+            except Exception as e:
+                print(f"An error occurred while reading {v}.json: {e}")
+            finally:
+                file.close()
+            
+        self.__iter_files(jsonext)
+
+    def __iter_files(self, ext):
+        start = time.time()
+        if os.path.exists(self.source):
+            for root, dirs, files in os.walk(self.source):
+                for file in files:
+                    file_count =+ 1
+                    file_path = os.path.join(root, file)
+                    file_size =+ os.path.getsize(file_path)
+                    if self.convert: self.convert_files(file_path)
+                    if self.duplicate: self.duplicate_find(file_path)
+                    self.organize(file_path, self.dest, ext)
+        else:
+            print(f"Source folder '{self.source}' does not exist. Skipping...")
+                
+        print(f"\nOrganized {file_count}({file_size/1073741824}) files in {time.time() - start:.3f} seconds")
+
+    def organize(self, file_path: str, dest, ext:list):
+        try:
+            for v in ext:
+                if v == "date":
+                    file_time = os.path.getmtime(file_path)
+                    date = datetime.fromtimestamp(file_time)
+                    year_folder = os.path.join(dest, str(date.year))
+                    month_folder = os.path.join(year_folder, date.strftime("%B"))
+                    os.makedirs(month_folder, exist_ok=True)
+                    shutil.copy2(file_path, os.path.join(month_folder, os.path.basename(file_path)))
+                    file_path = os.path.join(month_folder, os.path.basename(file_path))
+                if v == "app": pass
+                if v == "type": pass
+                if v == "size": pass
+
+        except Exception as e:
+            print(f"Error organizing file: '{file_path}': {e}")
+    
+    def duplicate_find(self, file):
+        pass
+
+    def convert_files(self, file):
+        pass
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(add_help=True, description="Organize Files in a Folder")
+    parser.add_argument('inputs', nargs='*', help="Source and Destination Folders (Destination at the last place)")
+
+    parser.add_argument("-m",
+        "--method", 
+        nargs="+",
+        required=True,
+        help="All Sorting methods to Use"
+    )
+
+    args = parser.parse_args()
+    FileOrganizer(
+        args.inputs[:-1],
+        args.inputs[-1],
+        ext=args.method
+    )
