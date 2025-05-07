@@ -16,11 +16,14 @@ limitations under the License.
 
 from tkinter import *
 from tkinter import ttk
-from customtkinter import CTk, set_appearance_mode, CTkScrollableFrame
-from logger import Logger 
-from organizer.enums import Settings
+from customtkinter import CTk, set_appearance_mode, CTkScrollableFrame, CTkFrame
 from PIL import Image, ImageTk
+import math
 import time
+import json
+import os
+from organizer import FileOrganizer, logger
+
 
 class GuiHandler(CTk):
 
@@ -40,20 +43,21 @@ class GuiHandler(CTk):
     def __init__(self): 
         # Setup
         super().__init__()
-        self.logger = Logger(False)
-        self.enum = Settings()
+
+        self.logger = logger
+        self.enums = Settings()
+
         self.geometry("800x500+60+60")
         self.minsize(800, 500)
         self.title("FileFusion")
-
         self.logger.info(f"Starting {self.NAME}...")
         self.logger.info(self.__doc__)
 
         try:
             # Theme
-            self.theme = Settings().get_theme()
+            self.theme = self.enums.get_theme()
             set_appearance_mode(self.theme["theme"])
-            self.load_images()
+            self.icons = self.enums.load_images()
             ttk.Style(self).configure(".", background=self.theme["bg"], font=("Helvetica", 18), foreground=self.theme["fg"], relief="flat")
 
             # Sidebar Frame
@@ -90,13 +94,16 @@ class GuiHandler(CTk):
                     bd=0,
                     cursor="hand2",
                     compound="left",
-                    pady=0
+                    pady=0,
+                    activebackground="#285b94",
+                    activeforeground="White",
+                    highlightthickness=0,
                 )
 
                 btn.pack(side="top", anchor="nw", fill="x")
                 
-                btn.bind("<Enter>", lambda e, b=btn: b.config(bg="#0867d2"))
-                btn.bind("<Leave>", lambda e, b=btn: b.config(bg=self.theme["sidebar"]))
+                btn.bind("<Enter>", lambda e, btn=btn: btn.config(bg="#0867d2"))
+                btn.bind("<Leave>", lambda e, btn=btn: btn.config(bg=self.theme["sidebar"]))
                 
                 self.button.append(btn)
 
@@ -107,22 +114,7 @@ class GuiHandler(CTk):
             self.logger.warning("Closed")
 
         except Exception as e:
-            print(e)
-    
-    def load_images(self):
-            self.icons = []
-            path = [(r"asset\icon.png", 32, 28),
-                (r"asset\button\home.png", 50, 50),
-                (r"asset\button\bolt.png", 50, 50),
-                (r"asset\button\store.png", 50, 50),
-                (r"asset\button\reload.png", 50, 50),
-                (r"asset\button\cog.png", 50, 50),
-            ]
-            for i in range(len(path)):
-                tmp = Image.open(path[i][0])
-                tmp = tmp.resize((path[i][1], path[i][2]), resample=Image.Resampling.LANCZOS)
-                tmp = ImageTk.PhotoImage(tmp)
-                self.icons.append(tmp)
+            print(e)          
         
     def redraw(self):
         for w in self.canvas.winfo_children():
@@ -130,34 +122,17 @@ class GuiHandler(CTk):
 
     def Home(self):
         self.redraw()
-        Label(self.canvas, text="FileFusion", font=("Helvetica", 115), fg=self.theme["fg"], bg=self.theme["bg"]).pack(side="top", expand=True, anchor="n", padx=0, pady=0, fill="both")
+        Label(self.canvas, text="FileFusion", font=("Helvetica", 65), fg=self.theme["fg"], bg=self.theme["bg"]).pack(side="top", expand=False, anchor="n", padx=0, pady=0, fill="both")
 
     def organize(self):
         self.redraw()
-        pass
     
     def automate(self):
         self.redraw()
-        pass
     
     def settings(self):
         self.redraw()
-
-        ttk.Label(self.canvas, text="Settings", font=("Helvetica", 72)).pack(side="top", anchor="nw", padx=10, pady=10)
-
-        canvas = CTkScrollableFrame(self.canvas, bg_color=self.theme["bg"], fg_color=self.theme["bg"], corner_radius=0)
-        canvas.pack(side="top", expand=True, fill="both")
-
-        ttk.Label(canvas, text="Theme: ", font=("Helvetica", 24)).pack(side="top", anchor="nw", padx=10, pady=10)
-        value = {"Dark" : "dark", "Light": "light"}
-        self.selected_theme = StringVar(self, name="theme")
-        self.selected_theme.set(self.theme["theme"])
-        for text, value in value.items(): 
-            ttk.Radiobutton(canvas, 
-                        value=value,
-                        text=text,
-                        command=self.__set_theme,
-                        variable=self.selected_theme).pack(side="left")
+        pass
 
     def store(self):
         self.redraw()
@@ -176,14 +151,39 @@ class GuiHandler(CTk):
             elif direction == "collapse":
                 for i in range(len(self.button)):
                     self.button[i].config(text="", compound="left")
-    def __set_theme(self):
-        theme = self.selected_theme.get()
-        Settings().set_theme(theme)
-        self.theme = Settings().get_theme()
-        set_appearance_mode(theme)
-        self.sidebar.update()
-        self.update()
-        self.canvas.update()
+
+class Settings:
+
+    paths = [
+        (r"asset\icon.png", 32, 28),
+        (r"asset\button\home.png", 50, 50),
+        (r"asset\button\bolt.png", 50, 50),
+        (r"asset\button\store.png", 50, 50),
+        (r"asset\button\reload.png", 50, 50),
+        (r"asset\button\cog.png", 50, 50),
+    ]
+
+    def load_images(self):
+        return [
+            ImageTk.PhotoImage(
+                Image.open(os.path.join(os.path.dirname(__file__), img_path))
+                    .resize((width, height), resample=Image.Resampling.LANCZOS)
+            ) 
+            for img_path, width, height in self.paths
+        ]
+    
+    def get_theme(self):
+        with open(os.path.join(os.path.dirname(__file__), "settings.json"), "r") as f:
+            settings = json.load(f)["_settings"]["_gui"]
+        return settings[settings["cur"]]
+    
+    def set_theme(self, theme):
+        with open(os.path.join(os.path.dirname(__file__), "settings.json"), "r+") as f:
+            data = json.load(f)
+            data["_settings"]["_gui"]["cur"] = theme
+            f.seek(0)
+            json.dump(data, f, indent=4)
+            f.truncate()
 
 if __name__ == "__main__":
     gui = GuiHandler()
